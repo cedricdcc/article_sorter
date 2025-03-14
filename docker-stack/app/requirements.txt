@@ -1,0 +1,6 @@
+dash==2.9.3
+plotly==5.15.0
+pymilvus==2.2.11
+beautifulsoup4==4.12.2
+requests==2.31.0
+PyMuPDF==1.22.5
