@@ -1,6 +1,8 @@
 # Vector database utilities for storing and retrieving data
 
-from pymilvus import connections, Collection, utility
+import weaviate
+
+client = None
 
 
 def connect_to_vector_db():
@@ -8,8 +10,9 @@ def connect_to_vector_db():
     Establishes a connection to the vector database.
     :return: Connection object or None if connection fails
     """
+    global client
     try:
-        connections.connect(alias="default", host="localhost", port="19530")
+        client = weaviate.Client("http://localhost:8080")
         print("Connected to the vector database.")
         return True
     except Exception as e:
@@ -24,32 +27,29 @@ def store_data_in_vector_db(data):
     :return: Success status
     """
     try:
-        collection_name = "articles"
-        if not utility.has_collection(collection_name):
-            # Define schema and create collection if it doesn't exist
-            from pymilvus import FieldSchema, CollectionSchema, DataType
+        class_name = "Article"
+        if not client.schema.exists(class_name):
+            schema = {
+                "class": class_name,
+                "properties": [
+                    {"name": "url", "dataType": ["string"]},
+                    {"name": "collection", "dataType": ["string"]},
+                    {"name": "abstract", "dataType": ["string"]},
+                ],
+            }
+            client.schema.create_class(schema)
+            print(f"Created class: {class_name}")
 
-            fields = [
-                FieldSchema(
-                    name="id", dtype=DataType.INT64, is_primary=True, auto_id=True
-                ),
-                FieldSchema(name="url", dtype=DataType.VARCHAR, max_length=500),
-                FieldSchema(name="collection", dtype=DataType.VARCHAR, max_length=100),
-                FieldSchema(name="abstract", dtype=DataType.VARCHAR, max_length=2000),
-            ]
-            schema = CollectionSchema(fields, description="Article collection")
-            Collection(name=collection_name, schema=schema)
-            print(f"Created collection: {collection_name}")
-
-        # Insert data into the collection
-        collection = Collection(collection_name)
-        entities = [
-            [data.get("url")],
-            [data.get("collection")],
-            [data.get("abstract")],
-        ]
-        collection.insert(entities)
-        print(f"Data inserted into collection: {data}")
+        # Insert data into the class
+        client.data_object.create(
+            {
+                "url": data.get("url"),
+                "collection": data.get("collection"),
+                "abstract": data.get("abstract"),
+            },
+            class_name=class_name,
+        )
+        print(f"Data inserted into class: {data}")
         return True
     except Exception as e:
         print(f"Error storing data in the vector database: {e}")
@@ -63,10 +63,13 @@ def query_vector_db(query):
     :return: Query results
     """
     try:
-        collection_name = "articles"
-        collection = Collection(collection_name)
-        results = collection.query(expr=query)
-        return results
+        class_name = "Article"
+        results = (
+            client.query.get(class_name, ["url", "collection", "abstract"])
+            .with_where(query)
+            .do()
+        )
+        return results.get("data", {}).get("Get", {}).get(class_name, [])
     except Exception as e:
         print(f"Error querying the vector database: {e}")
         return []
