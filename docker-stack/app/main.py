@@ -19,8 +19,19 @@ def main():
         print("Failed to connect to the vector database.")
         return
 
+    # cgeck what directory the script is running in and print all files in the directory
+    current_directory = os.getcwd()
+    print(f"Current directory: {current_directory}")
+    print("Files in the current directory:")
+    for file in os.listdir(current_directory):
+        print(file)
+
+    # go one level higher then the cwd and print all files in the directory
+    parent_directory = os.path.dirname(current_directory)
+    print(f"Parent directory: {parent_directory}")
+
     # Read the input CSV file
-    input_file = os.path.join("data", "input.csv")
+    input_file = os.path.join("..", "data", "input.csv")
     with open(input_file, "r") as csvfile:
         reader = csv.DictReader(csvfile)
         for row in reader:

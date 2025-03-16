@@ -12,7 +12,7 @@ def connect_to_vector_db():
     """
     global client
     try:
-        client = weaviate.Client("http://localhost:8080")
+        client = weaviate.Client("http://vector-db:8080")
         print("Connected to the vector database.")
         return True
     except Exception as e:
