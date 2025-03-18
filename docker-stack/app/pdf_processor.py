@@ -30,7 +30,10 @@ def generate_abstract_from_text(text):
     try:
         response = requests.post(
             "http://ollama:11434/api/generate",  # Example endpoint for Ollama
-            json={"prompt": f"Summarize the following text:\n{text}"},
+            json={
+                "model": "gemma3:1b",
+                "prompt": f"Summarize the following text:\n{text}"
+            },
         )
         response.raise_for_status()
         return response.json().get("summary", "Abstract generation failed.")
