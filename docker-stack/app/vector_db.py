@@ -1,8 +1,9 @@
 # Vector database utilities for storing and retrieving data
 
-import weaviate
+import weaviate  # type: ignore
+from typing import Optional
 
-client = None
+client: Optional[weaviate.Client] = None
 
 
 def connect_to_vector_db():
@@ -27,8 +28,11 @@ def store_data_in_vector_db(data):
     :return: Success status
     """
     try:
+        assert client is not None, "Database client not connected"
         class_name = "Article"
-        if not client.schema.exists(class_name):
+        current_schema = client.schema.get()
+        classes = [cls.get("class") for cls in current_schema.get("classes", [])]
+        if class_name not in classes:
             schema = {
                 "class": class_name,
                 "properties": [
@@ -63,6 +67,7 @@ def query_vector_db(query):
     :return: Query results
     """
     try:
+        assert client is not None, "Database client not connected"
         class_name = "Article"
         results = (
             client.query.get(class_name, ["url", "collection", "abstract"])
